@@ -57,14 +57,21 @@ $airportsCsv = fopen(__DIR__.'/airports.csv', 'r');
 // An array to hold the results.
 $results = [];
 
+$headers = null;
+
 // Go through each line in the input list...
+$i = 0;
 while ($line = fgetcsv($airportsCsv)) {
+    ++$i;
+    if ($i === 1) {
+        // This is the first line with the heades.
+        $headers = $line;
+        continue;
+    }
+
     // The 5th column of the input contains a piece of text like "POINT (-75.42394572094523 6.16640765)"
     // Parse that string into lat and lng.
     $pointParts = explode(' ', $line[5]);
-    if (count($pointParts) !== 3) {
-        continue;
-    }
     $lng = trim($pointParts[1], '()');
     $lat = trim($pointParts[2], '()');
 
@@ -75,8 +82,18 @@ while ($line = fgetcsv($airportsCsv)) {
     }
 }
 
-// Output all the results.
+// Sort the results by country code.
+usort($results, function ($a, $b)
+{
+    return strcmp($a[4], $b[4]);
+});
+
 $output = fopen('php://output', 'w');
+
+// Output the headers.
+fputcsv($output, $headers);
+
+// Output all the results.
 foreach ($results as $result) {
     fputcsv($output, $result);
 }
